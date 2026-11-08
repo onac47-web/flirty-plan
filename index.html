@@ -29,6 +29,7 @@ h2{font-size:18px;color:#C1777E;margin:28px 0 12px}h2 small{font-size:12px;color
 #m{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;padding:14px;z-index:9}#m.on{display:flex}
 .pan{background:#FFFAF5;border-radius:16px;max-width:620px;width:100%;max-height:88vh;overflow:auto;padding:20px}.pan h3{margin:4px 0 12px;font-size:19px}.pan label.t2{font-size:11.5px;color:#C1777E;font-weight:700;display:block;margin-top:12px}
 .pan pre{white-space:pre-wrap;font:13.5px/1.45 Montserrat,Arial,sans-serif;background:#fff;border:1px solid #F3E3E5;border-radius:10px;padding:10px;margin:4px 0 0}
+.gui h4{font-size:15px;margin:14px 0 6px}.gui p{margin:8px 0;font-size:13.5px;line-height:1.45}.gui ul{margin:6px 0;padding-left:20px;font-size:13.5px;line-height:1.45}.gui table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0;background:#fff}.gui td,.gui th{border:1px solid #F3E3E5;padding:6px;text-align:left;vertical-align:top}.gui th{background:#FFECF2;color:#C1777E}
 .acc{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.acc button,.acc a{font:600 13px Montserrat,Arial,sans-serif;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:#FFECF2;color:#000;text-decoration:none}.acc .pri{background:#C1777E;color:#fff}
 #aviso{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:10px 16px;border-radius:10px;display:none;z-index:10;font-weight:600}
 .carga{padding:60px;text-align:center;color:#C1777E;font-weight:600}
@@ -95,15 +96,28 @@ function pintar(){
  a.innerHTML=s;
  document.getElementById('sel').onchange=function(){plan=this.value;diaSel=null;pintar()};
 }
+function inl(t){return e(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')}
+function md(t){var out='',lin=String(t||'').split('\n'),i=0;
+ while(i<lin.length){var l=lin[i];
+  if(/^\|/.test(l)){var filas=[];while(i<lin.length&&/^\|/.test(lin[i])){filas.push(lin[i]);i++}
+   var cel=function(x){return x.replace(/^\||\|$/g,'').split('|').map(function(c){return c.trim()})};
+   out+='<table><tr>'+cel(filas[0]).map(function(c){return '<th>'+inl(c)+'</th>'}).join('')+'</tr>'+filas.slice(2).map(function(f){return '<tr>'+cel(f).map(function(c){return '<td>'+inl(c)+'</td>'}).join('')+'</tr>'}).join('')+'</table>';continue}
+  if(/^## /.test(l)){i++;continue}
+  if(/^#+ /.test(l))out+='<h4>'+inl(l.replace(/^#+ /,''))+'</h4>';
+  else if(/^- /.test(l)){out+='<ul>';while(i<lin.length&&/^- /.test(lin[i])){out+='<li>'+inl(lin[i].slice(2))+'</li>';i++}out+='</ul>';continue}
+  else if(l.trim())out+='<p>'+inl(l)+'</p>';
+  i++}
+ return out}
+function guion(id){var x=fila('Publicaciones',id);document.getElementById('pan').innerHTML='<div class="c" style="border:0;padding:0;background:none"><small>Guion · '+e(x.tipo)+' · '+e(x.fecha)+'</small></div><h3>'+e(x.titulo)+'</h3><div class="gui">'+md(x.guion)+'</div><div class="acc"><button class="pri" data-volver="'+e(id)+'">Volver</button><button data-cerrar="1">Cerrar</button></div>';document.getElementById('pan').scrollTop=0}
 function detalle(id){var x=fila('Publicaciones',id),s='<div class="c" style="border:0;padding:0;background:none"><small>'+e(x.tipo)+' · '+e(x.fecha)+(x.hora?' · '+e(x.hora):'')+(x.tiktok==='sí'?' · + TikTok':'')+'</small></div><h3>'+e(x.titulo)+'</h3>';
  if(x.que_grabar)s+='<label class="t2">QUÉ GRABAR O USAR</label><pre>'+e(x.que_grabar)+'</pre>';
  if(x.texto)s+='<label class="t2">TEXTO</label><pre id="txt">'+e(x.texto)+(x.hashtags?'\n\n'+e(x.hashtags):'')+'</pre>';
  if(x.enlace)s+='<label class="t2">ENLACE</label><pre>'+e(x.enlace)+'</pre>';
- s+='<div class="acc"><button class="pri" data-hecho="'+e(id)+'">'+(x.hecho==='sí'?'Marcar como pendiente':'Marcar como publicado')+'</button>'+(x.texto?'<button data-copiar="1">Copiar texto</button>':'')+(/^https:\/\//.test(x.guion_url)?'<a href="'+e(x.guion_url)+'" target="_blank" rel="noopener">Ver guion</a>':'')+'<button data-cerrar="1">Cerrar</button></div>';
+ s+='<div class="acc"><button class="pri" data-hecho="'+e(id)+'">'+(x.hecho==='sí'?'Marcar como pendiente':'Marcar como publicado')+'</button>'+(x.texto?'<button data-copiar="1">Copiar texto</button>':'')+(x.guion?'<button data-guion="'+e(id)+'">Ver guion</button>':'')+'<button data-cerrar="1">Cerrar</button></div>';
  document.getElementById('pan').innerHTML=s;document.getElementById('m').className='on'}
-document.addEventListener('click',function(ev){var t=ev.target.closest('[data-det],[data-pub],[data-dia],[data-ses],[data-fil],[data-tar],[data-mat],[data-hecho],[data-copiar],[data-cerrar]');
+document.addEventListener('click',function(ev){var t=ev.target.closest('[data-guion],[data-volver],[data-det],[data-pub],[data-dia],[data-ses],[data-fil],[data-tar],[data-mat],[data-hecho],[data-copiar],[data-cerrar]');
  if(!t){if(ev.target.id==='m')document.getElementById('m').className='';return}var d=t.dataset;
- if(d.det)detalle(d.det);else if(d.pub&&!movil())detalle(d.pub);else if(d.pub||d.dia){if(movil()){diaSel=d.dia||t.closest('[data-dia]').dataset.dia;pintar()}}else if(d.ses){abiertas[d.ses]=!abiertas[d.ses];pintar()}else if(d.fil){filtro=d.fil;pintar()}
+ if(d.guion)guion(d.guion);else if(d.volver)detalle(d.volver);else if(d.det)detalle(d.det);else if(d.pub&&!movil())detalle(d.pub);else if(d.pub||d.dia){if(movil()){diaSel=d.dia||t.closest('[data-dia]').dataset.dia;pintar()}}else if(d.ses){abiertas[d.ses]=!abiertas[d.ses];pintar()}else if(d.fil){filtro=d.fil;pintar()}
  else if(d.tar)cambiar('Tareas',d.tar);else if(d.mat)cambiar('Material',d.mat);
  else if(d.hecho){cambiar('Publicaciones',d.hecho);detalle(d.hecho)}
  else if(d.copiar){var mal=function(){aviso('Mantén pulsado el texto para copiarlo')};if(navigator.clipboard)navigator.clipboard.writeText(document.getElementById('txt').textContent).then(function(){aviso('Texto copiado')},mal);else mal()}
